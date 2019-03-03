@@ -66,21 +66,6 @@ We are using the following basic features of the OpenTracing API:
   * each `span` must be finished by calling its `finish` method
   * the start and end timestamps of the span will be captured automatically by the tracer implementation
 
-However, there's two issues with the above example: 
-1. In an application there can be many spans and we want our span to be the "active" one.
-2. It's a bit tedious to close the span manually, we take advantage Ruby's blocks to group statements and have the span automatically finish.
-
-The block form of `start_active_span' fixes both issues:
-
-```ruby
-def say_hello(hello_to)
-  OpenTracing.start_active_span('say-hello') do |scope|
-    hello_str = "Hello, #{hello_to}!"
-    puts hello_str
-  end
-end
-```
-
 If we run this program, we will see no difference, and no traces in the tracing UI.
 That's because `OpenTracing.global_tracer` points to a no-op tracer by default.
 
@@ -140,10 +125,10 @@ end
 OpenTracing.global_tracer = init_tracer('hello-world')
 
 def say_hello(hello_to)
-  OpenTracing.start_active_span('say-hello') do |scope|
-    hello_str = "Hello, #{hello_to}!"
-    puts hello_str
-  end
+  span = OpenTracing.start_span('say-hello')
+  hello_str = "Hello, #{hello_to}!"
+  puts hello_str
+  span.finish
 end
 
 raise ArgumentError, 'Expecting one argument' unless ARGV.count == 1
@@ -203,10 +188,10 @@ end
 OpenTracing.global_tracer = init_tracer('hello-world')
 
 def say_hello(hello_to)
-  OpenTracing.start_active_span('say-hello') do |scope|
-    hello_str = "Hello, #{hello_to}!"
-    puts hello_str
-  end
+  span = OpenTracing.start_span('say-hello')
+  hello_str = "Hello, #{hello_to}!"
+  puts hello_str
+  span.finish
 end
 
 raise ArgumentError, 'Expecting one argument' unless ARGV.count == 1
@@ -264,22 +249,11 @@ to the whole span and not to a particular moment in time. We can record it like 
 
 ```ruby
 def say_hello(hello_to)
-  OpenTracing.start_active_span('say-hello', tags: { hello_to: hello_to }) do |scope|
-    hello_str = "Hello, #{hello_to}!"
-    puts hello_str
-  end
-end
-```
-
-Alternatively you can set a tag via `scope.span`:
-
-```ruby
-def say_hello(hello_to)
-  OpenTracing.start_active_span('say-hello', tags: { hello_to: hello_to }) do |scope|
-    scope.span.set_tag('hello_to', hello_to)
-    hello_str = "Hello, #{hello_to}!"
-    puts hello_str
-  end
+  span = OpenTracing.start_span('say-hello')
+  span.set_tag('hello_to', hello_to)
+  hello_str = "Hello, #{hello_to}!"
+  puts hello_str
+  span.finish
 end
 ```
 

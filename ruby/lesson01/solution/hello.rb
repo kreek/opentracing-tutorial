@@ -11,13 +11,13 @@ class HelloWorld
   end
 
   def say_hello(hello_to)
-    OpenTracing.start_active_span('say-hello') do |scope|
-      scope.span.set_tag('hello_to', hello_to)
-      hello_str = "Hello, #{hello_to}!"
-      scope.span.log_kv(event: hello_str)
-      puts hello_str
-      scope.span.log_kv(event: 'print line')
-    end
+    span = OpenTracing.start_span('say-hello')
+    span.set_tag('funk', 'nuts')
+    hello_str = "Hello, #{hello_to}!"
+    span.log_kv(event: hello_str)
+    puts hello_str
+    span.log_kv(event: 'print line')
+    span.finish
   end
 end
 
